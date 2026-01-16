@@ -1,0 +1,23 @@
+---
+title: Failed to Write to Google Sheet
+description: Quickly resolve common worksheet writing issues.
+---
+
+## Symptoms
+
+- Error: "Failed to write to spreadsheet"
+- No data appears in Google Sheet after fetch
+
+## Steps to Fix
+
+<Steps>
+  <Step title="Check sharing">
+    Ensure your service account email is shared on the Google Sheet (check `client_email` in JSON).
+  </Step>
+  <Step title="Validate credentials">
+    Confirm your Google service account JSON is uploaded and valid.
+  </Step>
+  <Step title="Verify Sheet URL">
+    Double-check the spreadsheet URL and worksheet title are correct in the app.
+  </Step>
+</Steps>

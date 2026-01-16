@@ -1,0 +1,159 @@
+---
+title: Google Sheets Integration
+description: Learn how to connect and write SEC filing data to Google Sheets, including header management and troubleshooting common issues.
+---
+
+## Overview
+
+Connect your SEC Filings Scraper app to Google Sheets to automatically export fetched filing data. The integration handles header initialization on first write, appends subsequent results without overwriting, and supports worksheet auto-creation. Use this for ongoing tracking of filings by keywords, companies, or form types.
+
+<Callout kind="info">
+  Enable the Google Sheets API in your Google Cloud project and create a service account for authentication.
+</Callout>
+
+## Prerequisites
+
+Before starting, prepare these items:
+
+- A Google Cloud project with the Sheets API enabled
+- A service account JSON key file (download from Google Cloud Console)
+- A Google Sheet shared with the service account's `client_email` (found in the JSON)
+- Python dependencies: `gspread`, `google-auth`, `pandas`
+
+<Columns cols={2}>
+  <Card title="Create Service Account" icon="settings" href="#service-account-setup">
+    Step-by-step guide to generate JSON credentials.
+  </Card>
+  <Card title="Share Sheet Access" icon="share-2" href="#sharing-sheet">
+    Ensure the service account can edit your sheet.
+  </Card>
+</Columns>
+
+## Setting Up the Connection
+
+Follow these steps in the Streamlit sidebar to connect.
+
+<Steps>
+  <Step title="Upload Credentials" icon="upload">
+    Click the file uploader and select your service account JSON file. This authorizes the `gspread` client.
+  </Step>
+  <Step title="Enter Spreadsheet URL" icon="link">
+    Paste the full Google Sheets URL, e.g., `https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/edit`.
+  </Step>
+  <Step title="Test Connection" icon="check-circle">
+    Click <kbd>🔗 Test Spreadsheet Connection</kbd>. Success confirms access and populates the worksheet dropdown.
+  </Step>
+  <Step title="Select Worksheet" icon="file-text">
+    Choose an existing worksheet or let the app auto-create one on first write.
+  </Step>
+</Steps>
+
+## Worksheet Management
+
+The app supports existing and new worksheets seamlessly.
+
+<Tabs>
+  <Tab title="Existing Worksheet" icon="file">
+    Select from the dropdown after testing the connection. Data appends to the next empty row.
+  </Tab>
+  <Tab title="Auto-Creation" icon="plus">
+    If the specified `worksheet_title` does not exist, the app creates it automatically before writing.
+  </Tab>
+</Tabs>
+
+<CodeGroup tabs="Python">
+  ```python
+  # Example: write_df_to_sheet function logic
+  import gspread
+  import pandas as pd
+
+  def write_df_to_sheet(gc, spreadsheet_id, worksheet_title, df):
+      sh = gc.open_by_key(spreadsheet_id)
+      try:
+          wks = sh.worksheet(worksheet_title)
+      except gspread.WorksheetNotFound:
+          wks = sh.add_worksheet(title=worksheet_title, rows="1000", cols="20")
+      
+      # Header check and write
+      headers = wks.row_values(1)
+      if not headers:
+          wks.update(f'A1:{chr(64 + len(df.columns))}1', [df.columns.tolist()])
+          start_row = 2
+      else:
+          start_row = len(wks.get_all_values()) + 1
+      
+      if not df.empty:
+          wks.append_rows(df.values.tolist(), value_input_option='RAW')
+  ```
+</CodeGroup>
+
+## Header-First Writes and Data Appending
+
+On the first export to an empty worksheet:
+
+- Headers write to row 1 (e.g., `Date`, `Form`, `URL`, `Symbol`, `CIK`)
+- Data starts at row 2
+
+Subsequent exports append data rows only, preserving headers and prior data. This prevents duplication and column misalignment.
+
+<Callout kind="tip">
+  Empty fetches (zero results) trigger header-only writes if the sheet is new, ensuring structure without data.
+</Callout>
+
+## Filing Metadata Columns
+
+Exported data uses these standardized columns:
+
+| Column                  | Description                                      | Example Value                  |
+|-------------------------|--------------------------------------------------|--------------------------------|
+| Date                    | Filing date (DD-MMM-YYYY)                        | 15-Jan-2026                    |
+| Time                    | Export timestamp (HH:MM)                         | 14:30                          |
+| Form                    | Filing form type                                 | 10-K                           |
+| File                    | File extension                                   | html                           |
+| File description        | Brief content description                        | Complete submission text file  |
+| URL                     | Direct document link                             | https://efts.sec.gov/...       |
+| Filing Detail           | EDGAR index page link                            | https://www.sec.gov/Archives/... |
+| size                    | Document size                                    | 1.5 MB                         |
+| Filed                   | Official filing date                             | 2026-01-15                     |
+| Reporting For           | Period ending date                               | 2025-12-31                     |
+| Filing entity           | Primary company name                             | Apple Inc.                     |
+| Filing entity located   | State/country                                    | California, USA                |
+| Filing entity incorporated | Incorporation state                          | Delaware                       |
+| Filer name              | Secondary filer (if applicable)                  | Subsidiary Corp                |
+| Filer located           | Secondary location                               | New York, USA                  |
+| Filer incorporated      | Secondary incorporation                          | Nevada                         |
+| Symbol                  | Stock ticker                                     | AAPL                           |
+| CIK                     | SEC Central Index Key                            | 0000320193                     |
+
+## Troubleshooting
+
+<ExpandableGroup>
+  <Expandable title="Connection Failed" default-open="true">
+    - Verify the sheet is shared with the service account `client_email`
+    - Check the spreadsheet ID from the URL: `https://docs.google.com/spreadsheets/d/{ID}/edit`
+    - Ensure the JSON file is valid and not expired
+  </Expandable>
+  <Expandable title="Write Errors">
+    - Confirm Sheets API is enabled in Google Cloud
+    - Test permissions by manually appending a row via the Google Sheets UI with the service account
+    - Review console logs for `gspread` exceptions
+  </Expandable>
+  <Expandable title="Headers Missing">
+    Manually clear row 1 and re-fetch to trigger header initialization. Headers write only on first empty-sheet write.
+  </Expandable>
+  <Expandable title="Column Drift">
+    Fixed in v2.0: Uses explicit A1 ranges like `A1:P1` for headers and appends prevent shifts.
+  </Expandable>
+</ExpandableGroup>
+
+## Next Steps
+
+Export your first batch of 10-K filings to see the integration in action.
+
+<Card title="Fetch Example Data" icon="search" href="/quickstart">
+  Run a sample search for recent filings and export to Sheets.
+</Card>
+
+<Card title="Advanced Filters" icon="filter" href="/usage-guide">
+  Combine keywords, CIK, and forms for precise results.
+</Card>

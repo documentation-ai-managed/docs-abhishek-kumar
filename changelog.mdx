@@ -1,0 +1,115 @@
+---
+title: Changelog
+description: Track updates and improvements to the SEC Filings Scraper application, highlighting key changes in recent versions.
+---
+
+## Overview
+
+Stay up to date with the latest releases of the SEC Filings Scraper. This changelog details new features, improvements, bug fixes, and breaking changes across versions. You receive automatic pagination, retry logic enhancements, and robust Google Sheets integration.
+
+<Columns cols={2}>
+  <Card title="Current Version" icon="package" href="#current-version">
+    v2.0.0 - Production ready with column drift fixes and optimized retries.
+  </Card>
+  <Card title="Upgrade Guide" icon="settings" href="#upgrading">
+    Follow simple steps to update your installation.
+  </Card>
+</Columns>
+
+## Recent Updates
+
+<Update label="2026-01-16" description="v2.0.0" tags={["improvement", "bugfix"]}>
+
+## Improvements
+
+- Added explicit A1 range updates in `write_df_to_sheet` to prevent column drift on repeated writes.
+- Implemented auto-creation of missing worksheets in Google Sheets.
+- Optimized retry logic: reduced max attempts to 6, simplified exponential backoff with jitter capped at 10 seconds.
+- Enhanced header-first writes: initializes headers only on empty sheets, appends data rows subsequently.
+
+## Bug Fixes
+
+- Fixed column Q drift issue caused by implicit range expansion.
+- Header-only initialization now handles zero-result searches without writing empty rows.
+
+</Update>
+
+<Update label="2025-12-01" description="v1.1.0" tags={["feature", "improvement"]}>
+
+## New Features
+
+- Added predefined filing groups in UI: Riskalert-General, DEF14, 13D/13G checkboxes.
+- Introduced pagination status display in Streamlit UI with record count.
+
+## Improvements
+
+- Enhanced UI sidebar: better date range picker and worksheet selector.
+- Added 0.2-second pause between API page requests to respect SEC rate limits.
+
+</Update>
+
+<Update label="2025-11-15" description="v1.0.0" tags={["feature"]}>
+
+## New Features
+
+- Core SEC API integration via `https://efts.sec.gov/LATEST/search-index`.
+- Full Streamlit UI with search filters: keywords, CIK/ticker, date range, forms.
+- Google Sheets export with gspread: header detection and append-only writes.
+- CSV download button for local exports.
+- Session-level retries with urllib3 for transient errors (429, 500+).
+
+## Initial Release
+
+Complete MVP with robust data fetching and export capabilities.
+
+</Update>
+
+## Upgrading
+
+<Callout kind="info">
+  Backup your Google Sheets and service account JSON before upgrading. Test in a staging sheet.
+</Callout>
+
+<Steps>
+  <Step title="Update Dependencies" icon="download">
+
+    Use the latest package versions compatible with your Python setup.
+
+````python
+pip install --upgrade streamlit gspread google-auth requests pandas
+````
+
+  </Step>
+  <Step title="Review Breaking Changes" icon="alert-triangle">
+    v2.0.0 removes file size fetching for performance; "size" column may show null values.
+  </Step>
+  <Step title="Restart App" icon="play">
+    Run `streamlit run app.py` and test a sample search for "10-K" filings.
+  </Step>
+</Steps>
+
+## Version Compatibility
+
+| Version | Python | gspread | streamlit | Key Notes |
+|---------|--------|---------|-----------|-----------|
+| v2.0.0  | 3.8+   | 6.0+    | 1.38+     | A1 ranges prevent drift |
+| v1.1.0  | 3.8+   | 5.12+   | 1.35+     | UI enhancements |
+| v1.0.0  | 3.8+   | 5.0+    | 1.30+     | Initial release |
+
+## Future Enhancements
+
+<ExpandableGroup>
+  <Expandable title="v2.1.0 Planned Features" default-open="true">
+    - Real-time progress bar for large paginated fetches.
+    - Export to additional formats: Excel, JSON.
+    - Advanced filters: filer location, incorporation state.
+  </Expandable>
+  <Expandable title="Bug Fixes in Progress">
+    - Edge case handling for multi-entity filings with mismatched CIKs.
+    - Improved error messages for invalid spreadsheet IDs.
+  </Expandable>
+</ExpandableGroup>
+
+<Callout kind="tip">
+  Found an issue? Check the [repository](https://github.com/abhishekkumar/sec-filings-scraper) or contact support. Future releases focus on performance and new export options.
+</Callout>

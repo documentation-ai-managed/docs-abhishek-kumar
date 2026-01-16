@@ -1,0 +1,20 @@
+---
+title: How do I authenticate with the SEC API?
+description: Learn how to access the SEC API for the Filings Scraper.
+---
+
+## Overview
+
+No registration or authentication is needed for the SEC public API.
+
+## Usage
+
+All requests are made directly without API keys. Simply send queries to:
+
+````bash
+curl -X POST https://efts.sec.gov/LATEST/search-index \
+  -H "Content-Type: application/json" \
+  -d '{"q": "10-K", "forms": "10-K"}'
+````
+
+You do not need to include any authentication headers when using the SEC Filings Scraper by Abhishek Kumar.

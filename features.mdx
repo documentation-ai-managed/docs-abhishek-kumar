@@ -1,0 +1,142 @@
+---
+title: Core Features and Usage
+description: Explore the main capabilities of SEC Filings Scraper, from advanced search options to result handling and export functionalities.
+---
+
+## Overview
+
+SEC Filings Scraper provides powerful tools to retrieve and manage SEC filings efficiently. You can apply advanced filters for precise searches, use predefined groups for common filing types, and handle large datasets with built-in pagination and retry logic. Results appear in an interactive table, with options to download as CSV or export directly to Google Sheets.
+
+<Callout kind="info">
+  Connect your Google Sheets account first via the sidebar to enable automatic exports.
+</Callout>
+
+## Key Features
+
+Discover the core capabilities through these highlighted features.
+
+<Columns cols={3}>
+  <Card title="Advanced Filters" icon="search" href="#advanced-search-filters">
+    Search by keywords, companies, dates, and specific filing types for targeted results.
+  </Card>
+  <Card title="Predefined Groups" icon="list" href="#predefined-filing-groups">
+    Quick-select common categories like DEF14 or 13D/13G without manual entry.
+  </Card>
+  <Card title="Robust Fetching" icon="shield" href="#pagination-retry">
+    Automatic pagination and retry logic ensure complete data retrieval even under rate limits.
+  </Card>
+  <Card title="Export Options" icon="download" href="#reviewing-exports">
+    View results in tables, download CSV, or append to Google Sheets seamlessly.
+  </Card>
+</Columns>
+
+## Advanced Search Filters
+
+Tailor your searches using multiple filters simultaneously. Enter keywords to scan filing content, specify companies by name, ticker, or CIK, set date ranges, and select filing types.
+
+<Tabs>
+  <Tab title="Keyword Search" icon="search">
+    Search document content for phrases like "acquisition" or "merger".
+
+    ```javascript
+    // Example API query parameter
+    q: "acquisition"
+    ```
+
+    Combine with other filters for precision.
+  </Tab>
+  <Tab title="Company/Ticker/CIK" icon="users">
+    Target specific entities, e.g., "AAPL" or CIK `320193`.
+
+    <ParamField query="entityName" param-type="string" required="false">
+      Company name, ticker symbol, or CIK number.
+    </ParamField>
+  </Tab>
+  <Tab title="Date Range" icon="calendar">
+    Use the date picker for custom ranges, e.g., last 30 days.
+
+    ```javascript
+    // API parameters
+    dateRange: "custom",
+    startdt: "2024-01-01",
+    enddt: "2024-01-31"
+    ```
+  </Tab>
+  <Tab title="Filing Types" icon="file-text">
+    Select from checkboxes or enter comma-separated forms like "10-K,8-K".
+  </Tab>
+</Tabs>
+
+## Predefined Filing Groups
+
+Access common filing categories with one click. These groups save time for frequent queries.
+
+| Group Name          | Forms Included                  | Use Case                     |
+|---------------------|---------------------------------|------------------------------|
+| Riskalert-General   | 10-K,10-Q,8-K,S-1,S-4           | General risk disclosures     |
+| DEF14               | DEF 14A,DEF 14C                 | Proxy statements             |
+| 13D/13G             | SC 13D,SC 13G,SC 13D/A,SC 13G/A | Ownership changes            |
+| Insider Trading     | 4,Form 4                        | Executive transactions       |
+
+<Callout kind="tip">
+  Mix predefined groups with custom filters for hybrid searches.
+</Callout>
+
+## Pagination and Retry Logic
+
+The app fetches up to 100 results per page automatically, continuing until all hits are retrieved. Built-in retry handles SEC rate limits and transient errors.
+
+<Steps>
+  <Step title="Fetch Process" icon="download">
+    Enter parameters and click "🔎 Fetch Filings". The app paginates seamlessly.
+  </Step>
+  <Step title="Retry Handling" icon="refresh-cw">
+    On errors like 429 (rate limit), it applies exponential backoff: `(2^attempt - 1) * 0.5s + jitter`, up to 6 attempts.
+  </Step>
+  <Step title="Complete Results" icon="check-circle">
+    All pages combine into one table; status shows total records fetched.
+  </Step>
+</Steps>
+
+Here's a code example of the API call structure:
+
+<CodeGroup tabs="Python">
+  ```python
+  import requests
+
+  url = "https://efts.sec.gov/LATEST/search-index"
+  params = {
+      "q": "acquisition",
+      "entityName": "AAPL",
+      "forms": "8-K,10-Q",
+      "dateRange": "custom",
+      "startdt": "2024-01-01",
+      "enddt": "2024-12-31",
+      "from": 0,
+      "size": 100
+  }
+  response = requests.get(url, params=params)
+  filings = response.json().get("hits", {}).get("hits", [])
+  ```
+</CodeGroup>
+
+<Expandable title="Advanced Retry Configuration" default-open="false">
+  Customize `max_total_retries` in code for stricter control. Session uses `urllib3.Retry(total=3, backoff_factor=0.5)` for HTTP errors.
+</Expandable>
+
+## Reviewing and Exporting Results
+
+Results display in a sortable table with columns like Form, Filed, URL, Symbol, and CIK. Click URLs for direct SEC access.
+
+### Export Workflow
+
+1. Review the table for accuracy.
+2. Download as CSV via the button.
+3. Results auto-append to your selected Google Sheet (headers added only on first write).
+
+| Action          | Behavior                          |
+|-----------------|-----------------------------------|
+| CSV Download    | Saves full dataset locally        |
+| Sheet Append    | Adds rows starting at next empty; skips if no data |
+
+This ensures you capture complete, reliable filing data for analysis.
